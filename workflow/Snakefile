@@ -1,0 +1,87 @@
+
+blockIDs = ['KYPUGAOGIL']
+# , \
+# 'HDELEJYQIF', 'KQSUFAKPUY', 'FJJPIMEGPT', 'IFKXKWNUCO', 'VDCVHVKFJI','XCMCGNYDIP',\
+# 'EGXJCFQCPG', 'SKXLLYRPQL', 'CKWWISHFHK', 'NKAUARZCKO', 'MECTGOCDRL', 'APCQWNMIDO']
+
+import os
+uid = os.getuid()
+gid = os.getgid()
+
+
+rule all:
+    input:
+        expand(["data/fasta_mod/output/{blockID}_aln_fasta.fa",
+        "data/modgraph/{blockID}_mod_export",
+        "data/tree/{blockID}_tree_file"], blockID=blockIDs)
+
+rule extract:
+    input:
+        path = "data/test_graph_b_20.json",
+        strains = "data/strains.json",
+    output:
+        modgraph = "data/modgraph/{blockID}_mod_graph_b_20.json"
+    shell:
+        """
+        python extract.py \
+            --pangraph {input.path} \
+            --strains {input.strains} \
+            --output {output.modgraph} \
+            --blockID {wildcards.blockID}
+        """
+
+rule getseq:
+    input:
+        graph = rules.extract.output.modgraph,
+        paths = "data/fasta",
+    output:
+        partgraph = "data/fasta_mod/input/{blockID}_fasta.fa",
+    shell:
+        """
+        python get_seq.py \
+            --graph {input.graph} \
+            --paths {input.paths} \
+            --output {output.partgraph} \
+        """
+
+rule aligne:
+    input:
+        partgraph = rules.getseq.output.partgraph,
+    output:
+        aln = "data/fasta_mod/output/{blockID}_aln_fasta.fa",
+    shell:
+        """
+        mafft --auto {input.partgraph} > {output.aln}
+        """
+
+rule export:
+    input:
+        graph = rules.extract.output.modgraph,
+    output:
+        export = directory("data/exp/{blockID}_mod_export")
+    params:
+        uid=uid,
+        gid=gid,
+    shell:
+        """
+        docker run --rm -it \
+            --name "pangraph-$(date +%s)" \
+            --volume="$(pwd):/workdir" \
+            --user="$(id -u):$(id -g)" \
+            --workdir=/workdir \
+            neherlab/pangraph:master \
+            bash -c "pangraph export \
+            --export-panX \
+            --no-duplications \
+            --output-directory {output.export} {input.graph}"
+        """
+
+rule make_tree:
+    input:
+        aln_in = rules.aligne.output.aln,
+    output:
+        tree = "data/tree/{blockID}_tree_file"
+    shell:
+        """
+        FastTree -gtr -nt < {input.aln_in} > {output.tree} 
+        """
