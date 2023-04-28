@@ -1,8 +1,7 @@
 
-blockIDs = ['KYPUGAOGIL']
-# , \
-# 'HDELEJYQIF', 'KQSUFAKPUY', 'FJJPIMEGPT', 'IFKXKWNUCO', 'VDCVHVKFJI','XCMCGNYDIP',\
-# 'EGXJCFQCPG', 'SKXLLYRPQL', 'CKWWISHFHK', 'NKAUARZCKO', 'MECTGOCDRL', 'APCQWNMIDO']
+blockIDs = ['AAMTDKDXFU', 'KYPUGAOGIL', 'QGMULFCDZU', 'CSIQYWOOKF', 'IAARMKLRYF',\
+ 'HDELEJYQIF', 'KQSUFAKPUY', 'FJJPIMEGPT', 'IFKXKWNUCO', 'VDCVHVKFJI', 'XCMCGNYDIP',\
+ 'EGXJCFQCPG', 'SKXLLYRPQL', 'CKWWISHFHK', 'NKAUARZCKO', 'MECTGOCDRL', 'APCQWNMIDO']
 
 import os
 uid = os.getuid()
@@ -12,8 +11,12 @@ gid = os.getgid()
 rule all:
     input:
         expand(["data/fasta_mod/output/{blockID}_aln_fasta.fa",
-        "data/modgraph/{blockID}_mod_export",
         "data/tree/{blockID}_tree_file"], blockID=blockIDs)
+
+        #workflow with export:
+        # expand(["data/fasta_mod/output/{blockID}_aln_fasta.fa",
+        # "data/modgraph/{blockID}_mod_export",
+        # "data/tree/{blockID}_tree_file"], blockID=blockIDs)
 
 rule extract:
     input:
@@ -23,7 +26,7 @@ rule extract:
         modgraph = "data/modgraph/{blockID}_mod_graph_b_20.json"
     shell:
         """
-        python extract.py \
+        python notebooks/extract.py \
             --pangraph {input.path} \
             --strains {input.strains} \
             --output {output.modgraph} \
@@ -38,7 +41,7 @@ rule getseq:
         partgraph = "data/fasta_mod/input/{blockID}_fasta.fa",
     shell:
         """
-        python get_seq.py \
+        python notebooks/get_seq.py \
             --graph {input.graph} \
             --paths {input.paths} \
             --output {output.partgraph} \

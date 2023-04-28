@@ -3,6 +3,8 @@
 /data/fasta_mod
 /data/tree
 
+.snakemake
+
 __pycache__/
 *.py[cod]
 *$py.class

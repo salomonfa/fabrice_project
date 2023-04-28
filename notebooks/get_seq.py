@@ -4,7 +4,8 @@ import argparse
 
 def get_seq(graph, paths, output, blockID):
     """
-    
+    Extracts a part of a fasta file based on a partial pangraph and writes a new fasta file
+    containing the partial sequence.
 
     Args:
         graph: path to a .json containing a partial pangraph.
